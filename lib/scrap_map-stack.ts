@@ -1,6 +1,7 @@
 import { Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import { ApiStack } from './stacks/apiStack'
+import { StorageStack } from './stacks/storageStack';
 import { UserPoolStack } from './stacks/userPoolStack';
 
 const env = {
@@ -11,6 +12,10 @@ const env = {
 export class ScrapMapStack extends Stack {
   constructor(scope: Construct, id: string, props?: StackProps) {
     super(scope, id, {...props, env});
+
+    const storageStack = new StorageStack(this, 'storageStack', {
+      env: env
+    })
 
     const userPoolStack = new UserPoolStack(this, 'userPoolStack', {
       env: env
