@@ -25,7 +25,10 @@ export class ScrapMapStack extends Stack {
       env: env,
       userPool: userPoolStack.userPool,
       clientId: userPoolStack.userPoolClient.userPoolClientId,
-      userPoolRole: userPoolStack.userPoolRole
+      userPoolRole: userPoolStack.userPoolRole,
+      dynamoTableReadRole: storageStack.dynamoTableReadRole,
+      dynamoTableWriteRole: storageStack.dynamoTableWriteRole,
+      dynamoTableName: storageStack.dynamoTableName
     })
   }
 }

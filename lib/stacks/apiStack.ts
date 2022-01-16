@@ -8,7 +8,10 @@ import { UserPool } from 'aws-cdk-lib/aws-cognito';
 interface apiStackProps extends StackProps {
   userPool: UserPool,
   clientId: string,
-  userPoolRole: Role
+  userPoolRole: Role,
+  dynamoTableReadRole: Role,
+  dynamoTableWriteRole: Role,
+  dynamoTableName: string,
 }
 
 export class ApiStack extends Stack {
