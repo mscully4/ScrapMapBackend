@@ -1,6 +1,6 @@
 import { Duration, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { CfnAuthorizer, AuthorizationType, RequestValidator, LambdaIntegration, ProxyResource, Resource, RestApi, Method } from 'aws-cdk-lib/aws-apigateway'
+import { CfnAuthorizer, AuthorizationType, RequestValidator, LambdaIntegration, ProxyResource, Resource, RestApi, Method, Model, JsonSchemaType } from 'aws-cdk-lib/aws-apigateway'
 import { Code, Function, Runtime, LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { Role } from 'aws-cdk-lib/aws-iam';
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
@@ -107,6 +107,53 @@ export class ApiStack extends Stack {
       requestValidator: requestValidator,
       requestParameters: {
         "method.request.querystring.user": true,
+      }
+    })
+
+    const destinationsPostFunction = new Function(this, 'destinationsPostFunction', {
+      runtime: Runtime.PYTHON_3_8,
+      memorySize: 128,
+      timeout: Duration.seconds(30),
+      handler: "api.v1.destinations.post.lambda_handler",
+      code: Code.fromAsset('src/'),
+      environment: {
+        PYTHONPATH: "/var/runtime:/opt",
+        DYNAMO_WRITE_ROLE_ARN: props.dynamoTableWriteRole.roleArn,
+        DYNAMO_TABLE_NAME: props.dynamoTableName
+      },
+      layers: [flaskLayer]
+    })
+
+    if (destinationsPostFunction.role) {
+      props.dynamoTableWriteRole.grant(destinationsPostFunction.role, 'sts:AssumeRole')
+    }
+
+    const destinationsModel = new Model(this, "destinationsModel", {
+      restApi: this.restApi,
+      contentType: "application/json",
+      modelName: "destinationsModel",
+      schema: {
+        type: JsonSchemaType.OBJECT,
+        required: ["place_id", "name", "country", "country_code", "latitude", "longitude"],
+        properties: {
+          place_id: { type: JsonSchemaType.STRING },
+          name: { type: JsonSchemaType.STRING },
+          country: { type: JsonSchemaType.STRING },
+          country_code: { type: JsonSchemaType.STRING },
+          latitude: { type: JsonSchemaType.NUMBER },
+          longitude: { type: JsonSchemaType.NUMBER },
+        },
+      },
+    });
+
+    destinationsApiResource.addMethod('POST', new LambdaIntegration(destinationsPostFunction), { 
+      authorizationType: AuthorizationType.COGNITO,
+      authorizer: {
+        authorizerId: cognitoRequestAuthorizer.ref
+      },
+      requestValidator: requestValidator,
+      requestModels: {
+        "application/json": destinationsModel
       }
     })
   }
