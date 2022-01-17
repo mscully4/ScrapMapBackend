@@ -156,5 +156,35 @@ export class ApiStack extends Stack {
         "application/json": destinationsModel
       }
     })
+
+    const destinationsDeleteFunction = new Function(this, 'destinationsDeleteFunction', {
+      runtime: Runtime.PYTHON_3_8,
+      memorySize: 128,
+      timeout: Duration.seconds(30),
+      handler: "api.v1.destinations.delete.lambda_handler",
+      code: Code.fromAsset('src/'),
+      environment: {
+        PYTHONPATH: "/var/runtime:/opt",
+        DYNAMO_WRITE_ROLE_ARN: props.dynamoTableWriteRole.roleArn,
+        DYNAMO_TABLE_NAME: props.dynamoTableName
+      },
+      layers: [flaskLayer]
+    })
+
+    if (destinationsDeleteFunction.role) {
+      props.dynamoTableWriteRole.grant(destinationsDeleteFunction.role, 'sts:AssumeRole')
+    }
+
+    destinationsApiResource.addMethod('DELETE', new LambdaIntegration(destinationsDeleteFunction), { 
+      authorizationType: AuthorizationType.COGNITO,
+      authorizer: {
+        authorizerId: cognitoRequestAuthorizer.ref
+      },
+      requestValidator: requestValidator,
+      requestParameters: {
+        "method.request.querystring.place_id": true,
+      }
+    });
+
   }
 }
