@@ -74,5 +74,12 @@ export class ApiStack extends Stack {
       anyMethod: true,
       defaultIntegration: new LambdaIntegration(authProxyFunction),
     })
+
+    // Destinations
+    const destinationsApiResource = new Resource(this, 'destinationsApiResource', {
+      pathPart: 'destinations',
+      parent: this.restApi.root
+    })
+
   }
 }
