@@ -1,6 +1,6 @@
 import { Duration, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { CfnAuthorizer, AuthorizationType, LambdaIntegration, ProxyResource, Resource, RestApi } from 'aws-cdk-lib/aws-apigateway'
+import { CfnAuthorizer, AuthorizationType, RequestValidator, LambdaIntegration, ProxyResource, Resource, RestApi } from 'aws-cdk-lib/aws-apigateway'
 import { Code, Function, Runtime, LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { Role } from 'aws-cdk-lib/aws-iam';
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
@@ -29,6 +29,12 @@ export class ApiStack extends Stack {
       restApiId: this.restApi.restApiId,
       type: AuthorizationType.COGNITO,
       providerArns: [props.userPool.userPoolArn]
+    })
+
+    const requestValidator = new RequestValidator(this, 'ApiRequestValidator', {
+      restApi: this.restApi,
+      validateRequestParameters: true,
+      validateRequestBody: true
     })
 
     const authApiResource = new Resource(this, 'authApiResource', {
