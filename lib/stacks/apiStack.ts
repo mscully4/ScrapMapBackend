@@ -1,6 +1,6 @@
 import { Duration, Stack, StackProps } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
-import { CfnAuthorizer, AuthorizationType, RequestValidator, LambdaIntegration, ProxyResource, Resource, RestApi } from 'aws-cdk-lib/aws-apigateway'
+import { CfnAuthorizer, AuthorizationType, RequestValidator, LambdaIntegration, ProxyResource, Resource, RestApi, Method } from 'aws-cdk-lib/aws-apigateway'
 import { Code, Function, Runtime, LayerVersion } from 'aws-cdk-lib/aws-lambda';
 import { Role } from 'aws-cdk-lib/aws-iam';
 import { UserPool } from 'aws-cdk-lib/aws-cognito';
@@ -81,5 +81,33 @@ export class ApiStack extends Stack {
       parent: this.restApi.root
     })
 
+    const destinationsGetFunction = new Function(this, 'destinationsGetFunction', {
+      runtime: Runtime.PYTHON_3_8,
+      memorySize: 128,
+      timeout: Duration.seconds(30),
+      handler: "api.v1.destinations.get.lambda_handler",
+      code: Code.fromAsset('src/'),
+      environment: {
+        PYTHONPATH: "/var/runtime:/opt",
+        DYNAMO_READ_ROLE_ARN: props.dynamoTableReadRole.roleArn,
+        DYNAMO_TABLE_NAME: props.dynamoTableName
+      },
+      layers: [flaskLayer]
+    })
+
+    if (destinationsGetFunction.role) {
+      props.dynamoTableReadRole.grant(destinationsGetFunction.role, 'sts:AssumeRole')
+    }
+
+    destinationsApiResource.addMethod('GET', new LambdaIntegration(destinationsGetFunction), { 
+      authorizationType: AuthorizationType.COGNITO,
+      authorizer: {
+        authorizerId: cognitoRequestAuthorizer.ref
+      },
+      requestValidator: requestValidator,
+      requestParameters: {
+        "method.request.querystring.user": true,
+      }
+    })
   }
 }
