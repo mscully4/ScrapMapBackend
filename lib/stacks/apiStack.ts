@@ -186,5 +186,10 @@ export class ApiStack extends Stack {
       }
     });
 
+     // Places
+     const placesApiResource = new Resource(this, 'placesApiResource', {
+      pathPart: 'places',
+      parent: this.restApi.root
+    })
   }
 }
