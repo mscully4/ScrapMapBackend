@@ -217,5 +217,68 @@ export class ApiStack extends Stack {
       }
     });
 
+    const placesPostFunction = new Function(this, 'placesPostFunction', {
+      runtime: Runtime.PYTHON_3_8,
+      memorySize: 128,
+      timeout: Duration.seconds(30),
+      handler: "api.v1.places.post.lambda_handler",
+      code: Code.fromAsset('src/'),
+      environment: {
+        PYTHONPATH: "/var/runtime:/opt",
+        DYNAMO_WRITE_ROLE_ARN: props.dynamoTableWriteRole.roleArn,
+        DYNAMO_TABLE_NAME: props.dynamoTableName
+      },
+      layers: [flaskLayer]
+    })
+
+    if (placesPostFunction.role) {
+      props.dynamoTableWriteRole.grant(placesPostFunction.role, 'sts:AssumeRole')
+    }
+
+    const placesModel = new Model(this, "placesModel", {
+      restApi: this.restApi,
+      contentType: "application/json",
+      modelName: "placesModel",
+      schema: {
+        type: JsonSchemaType.OBJECT,
+        required: [
+          "place_id", 
+          "name",
+          "address",
+          "city",
+          "state", 
+          "country", 
+          "zip_code", 
+          "latitude", 
+          "longitude",
+          "destination_id"
+        ],
+        properties: {
+          place_id: { type: JsonSchemaType.STRING },
+          name: { type: JsonSchemaType.STRING },
+          address: { type: JsonSchemaType.STRING },
+          city: { type: JsonSchemaType.STRING },
+          state: { type: JsonSchemaType.STRING },
+          country: { type: JsonSchemaType.STRING },
+          zip_code: { type: JsonSchemaType.STRING },
+          latitude: { type: JsonSchemaType.NUMBER },
+          longitude: { type: JsonSchemaType.NUMBER },
+          // Destination_Id is the place_id of the Destination
+          destination_id: { type: JsonSchemaType.STRING }
+        },
+      },
+    });
+
+    placesApiResource.addMethod('POST', new LambdaIntegration(placesPostFunction), { 
+      authorizationType: AuthorizationType.COGNITO,
+      authorizer: {
+        authorizerId: cognitoRequestAuthorizer.ref
+      },
+      requestValidator: requestValidator,
+      requestModels: {
+        "application/json": placesModel
+      }
+    });
+
   }
 }
