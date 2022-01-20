@@ -11,6 +11,7 @@ CHANGE_PASSWORD_URL = f"{AUTH_URL}/change_password"
 RESPOND_TO_AUTH_CHALLENGE_URL = f"{AUTH_URL}/respond_to_auth_challenge"
 RESEND_VERIFICATION_CODE_URL = f"{AUTH_URL}/resend_verification_code"
 
+
 class AuthBodyFields:
     USERNAME = "username"
     REFRESH_TOKEN = "refresh_token"
