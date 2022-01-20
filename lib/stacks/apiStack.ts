@@ -191,5 +191,31 @@ export class ApiStack extends Stack {
       pathPart: 'places',
       parent: this.restApi.root
     })
+
+    const placesGetFunction = new Function(this, 'placesGetFunction', {
+      runtime: Runtime.PYTHON_3_8,
+      memorySize: 128,
+      timeout: Duration.seconds(30),
+      handler: "api.v1.places.get.lambda_handler",
+      code: Code.fromAsset('src/'),
+      environment: {
+        PYTHONPATH: "/var/runtime:/opt",
+        DYNAMO_READ_ROLE_ARN: props.dynamoTableReadRole.roleArn,
+        DYNAMO_TABLE_NAME: props.dynamoTableName
+      },
+      layers: [flaskLayer]
+    })
+
+    if (placesGetFunction.role) {
+      props.dynamoTableReadRole.grant(placesGetFunction.role, 'sts:AssumeRole')
+    }
+
+    placesApiResource.addMethod('GET', new LambdaIntegration(placesGetFunction), { 
+      requestValidator: requestValidator,
+      requestParameters: {
+        "method.request.querystring.user": true,
+      }
+    });
+
   }
 }
