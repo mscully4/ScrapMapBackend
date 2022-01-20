@@ -18,9 +18,9 @@ class _StsCredentialProvider(botocore.credentials.CredentialProvider):
     provided in the constructor.
 
     This will fail early during the first `load` attempt instead of hiding/logging
-    the failure as is done in `botocore_sts_credential_provider`.  We want to fail as soon
-    as we try to assume a role instead of failing when trying to invoke a client method
-    on a session with no credentials.
+    the failure as is done in `botocore_sts_credential_provider`.  We want to fail
+    as soon as we try to assume a role instead of failing when trying to invoke a
+    client method on a session with no credentials.
     """
 
     def __init__(
