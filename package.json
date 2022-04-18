@@ -1,14 +1,14 @@
 {
-  "name": "scrap_map",
+  "name": "travelmap-backend",
   "version": "0.1.0",
-  "bin": {
-    "scrap_map": "bin/scrap_map.js"
-  },
+  "main": "dist/lib/app.js",
+  "types": "dist/types/app.d.ts",
   "scripts": {
     "build": "tsc",
     "watch": "tsc -w",
     "test": "jest",
-    "cdk": "cdk"
+    "cdk": "cdk",
+    "clean": "rm -rf dist && rm -rf cdk.out"
   },
   "devDependencies": {
     "@types/jest": "^26.0.10",
